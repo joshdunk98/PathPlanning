@@ -96,7 +96,7 @@ class World:
 
         size = (755, 755)
         self.screen = pygame.display.set_mode(size)
-        pygame.display.set_caption("My Game")
+        pygame.display.set_caption("Path Planning")
 
         self.width = 20
         self.height = 20
@@ -190,33 +190,22 @@ class World:
 
     def draw_obstacles(self) -> None:
         done = False
-        # -------- Main Program Loop -----------
+
         while not done:
-            # --- Main event loop
-            for event in pygame.event.get():  # User did something
-                if event.type == pygame.QUIT:  # If user clicked close
-                    done = True  # Flag that we are done so we exit this loop
+            for event in pygame.event.get():
+                if event.type == pygame.QUIT:
+                    done = True
                 elif event.type == pygame.KEYDOWN:
                     if event.key == pygame.K_RETURN:
-                        print("ENTER HIT")
                         done = True
-                        break
                 elif pygame.mouse.get_pressed()[0]:
                     column = pos[0] // (self.width + self.margin)
                     row = pos[1] // (self.height + self.margin)
-                    # Debug prints
-                    print("Click ", pos, "Grid coordinates: ", row, column)
+
                     self.grid[row][column] = 1
 
-            # --- Game logic should go here
             pos = pygame.mouse.get_pos()
-            x = pos[0]
-            y = pos[1]
 
-            # --- Drawing code should go here
-
-            # First, clear the screen to white. Don't put other drawing commands
-            # above this, or they will be erased with this command.
             self.screen.fill(BLACK)
 
             for row in range(self.max_y):
@@ -230,10 +219,8 @@ class World:
 
                     pygame.draw.rect(self.screen, color, [self.margin + (self.margin+self.width) * column, self.margin + (self.margin+self.height) * row, self.width, self.height])
 
-            # --- Go ahead and update the screen with what we've drawn.
             pygame.display.flip()
 
-            # --- Limit to 60 frames per second
             self.clock.tick(60)
 
     def update_world(self, c: Coordinate) -> None:
@@ -471,4 +458,4 @@ if __name__=="__main__":
     algorithm.find_path(grid)
 
 
-    #grid.close_game()
+    grid.close_game()
