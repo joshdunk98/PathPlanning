@@ -1,25 +1,8 @@
-import pygame, sys
+import pygame
 import math as m
-import typing
 from queue import Queue
 import time
 
-"""
-    Future imports for path planning visualization
-
-    from random import randrange
-    from pygame.locals import *
-    from ctypes import c_int, WINFUNCTYPE, windll
-    from ctypes.wintypes import HWND, LPCSTR, UINT
-
-
-def MessageBox(title, text, style):
-    return windll.user32.MessageBoxW(0, text, title, style)
-
-def found():
-    MessageBox("A* finished. Found the shortest path!", "Try again?", 0)
-    resetPath()
-"""
 
 BLACK = (0, 0, 0)
 WHITE = (255, 255, 255)
@@ -28,8 +11,9 @@ GREEN = (0, 255, 0)
 RED = (255, 0, 0)
 BLUE = (0, 0, 255)
 
-NUM_ROWS = 30
-NUM_COLS = 30
+NUM_ROWS = 31
+NUM_COLS = 31
+
 
 class Coordinate:
     def __init__(self, x=None, y=None, dist=0):
@@ -58,17 +42,33 @@ class PriorityQueue:
         self.q = []
 
     def insert(self, x: (float, Coordinate)) -> None:
-        self.q.append(x)
-        self.sort_queue()
+        flag = False
+        for idx, item in enumerate(self.q):
+            if item[0] > x[0]:
+                flag = True
+                self.q.insert(idx, x)
+                break
+
+        if not flag:
+            self.q.append(x)
 
     def get(self) -> (float, Coordinate):
         return self.q.pop(0)
 
     def empty(self) -> bool:
-        if len(q) == 0:
+        if len(self.q) == 0:
             return True
         return False
 
+    def print_queue(self) -> None:
+        print([(node[0], (node[1].x, node[1].y)) for node in self.q])
+
+    """
+        The following functions are only necessary for replacing nodes 
+        that already exist in the priority queue (i.e., if existing node
+        is found to have a smaller cost, replace the current node with
+        the new one).
+    """
     def sort_queue(self) -> None:
         self.q.sort(key=lambda x: x[0])
 
@@ -84,9 +84,6 @@ class PriorityQueue:
             self.q.pop(idx)
         self.q.append((node[0], node[1]))
         self.sort_queue()
-
-    def print_queue(self) -> None:
-        print([(node[0], (node[1].x, node[1].y)) for node in self.q])
 
 
 # class to hold all information about the world provided by world*.dat
@@ -270,7 +267,7 @@ class World:
         counter = 0
 
         while (True):
-            if checknode == (x, y):
+            if checknode == (x, y): # For debugging purposes  -> check to see if path updates correctly
                 counter += 1
                 if counter == 50:
                     break
@@ -399,22 +396,22 @@ class AStar:
             if w.within_range(c1.x, c1.y) and (w.grid[c1.y][c1.x] == 0 or w.is_end(c1.x, c1.y)):
                 w.grid[c1.y][c1.x] = w.grid[coordinate.y][coordinate.x] + 1
                 cost = self.g(c1) + self.h(c1, w.end)
-                q.update_queue((cost, c1))
+                q.insert((cost, c1))
 
             if w.within_range(c2.x, c2.y) and (w.grid[c2.y][c2.x] == 0 or w.is_end(c2.x, c2.y)):
                 w.grid[c2.y][c2.x] = w.grid[coordinate.y][coordinate.x] + 1
                 cost = self.g(c2) + self.h(c2, w.end)
-                q.update_queue((cost, c2))
+                q.insert((cost, c2))
 
             if w.within_range(c3.x, c3.y) and (w.grid[c3.y][c3.x] == 0 or w.is_end(c3.x, c3.y)):
                 w.grid[c3.y][c3.x] = w.grid[coordinate.y][coordinate.x] + 1
                 cost = self.g(c3) + self.h(c3, w.end)
-                q.update_queue((cost, c3))
+                q.insert((cost, c3))
 
             if w.within_range(c4.x, c4.y) and (w.grid[c4.y][c4.x] == 0 or w.is_end(c4.x, c4.y)):
                 w.grid[c4.y][c4.x] = w.grid[coordinate.y][coordinate.x] + 1
                 cost = self.g(c4) + self.h(c4, w.end)
-                q.update_queue((cost, c4))
+                q.insert((cost, c4))
 
     def set_heuristic(self, heuristic: str) -> None:
         self.heuristic = heuristic
