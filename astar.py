@@ -16,10 +16,12 @@ NUM_COLS = 31
 
 
 class Coordinate:
-    def __init__(self, x=None, y=None, dist=0):
+    def __init__(self, x=None, y=None, parent=None, action=None, dist=0):
         self.x = x
         self.y = y
         self.dist = dist
+        self.parent = parent
+        self.action = action
 
     def get_coordinates(self) -> [int, int]:
         return self.x, self. y
@@ -30,8 +32,20 @@ class Coordinate:
     def get_y(self) -> int:
         return self.y
 
+    def get_parent(self):
+        return self.parent
+
+    def get_action(self) -> str:
+        return self.action
+
     def get_distance(self) -> int:
         return self.dist
+
+    def set_action(self, action: str) -> None:
+        self.action = action
+
+    def set_parent(self, parent) -> None:
+        self.parent = parent
 
     def set_distance(self, dist: int) -> None:
         self.dist = dist
@@ -180,6 +194,7 @@ class World:
         print()
 
 
+        # Remove initialization of start and end -> coordinates should be enough
         # Initialize start and end in the world map
         self.grid[self.start.y][self.start.x] = 2
         self.grid[self.end.y][self.end.x] = 2
@@ -221,7 +236,7 @@ class World:
             self.clock.tick(60)
 
     def update_world(self, c: Coordinate) -> None:
-        print("Updating world.....")
+        #print("Updating world.....")
         pygame.event.get()
         pygame.draw.rect(self.screen, GREEN, [self.margin + (self.margin+self.width) * c.x, self.margin + (self.margin+self.height) * c.y, self.width, self.height])
         pygame.display.flip()
@@ -259,6 +274,35 @@ class World:
         return False
 
     # Find the path from the start goal to the end goal with the current world map
+    def calculate_path(self) -> None: # Currently not tracing the optimal path back using parent nodes 
+        node = self.end
+
+        while node.get_parent() is not None:
+            print((node.x, node.y), (node.get_parent().x, node.get_parent().y))
+            #print((node.x, node.y), end=" ")
+            self.k += 1
+
+            pygame.event.get()
+            pygame.draw.rect(self.screen, BLUE, [self.margin + (self.margin + self.width) * node.x,
+                                                  self.margin + (self.margin + self.height) * node.y, self.width,
+                                                  self.height])
+            pygame.display.flip()
+
+            time.sleep(0.1)
+            node = node.get_parent()
+
+        print((node.x, node.y))
+        self.k += 1
+
+        pygame.event.get()
+        pygame.draw.rect(self.screen, BLUE, [self.margin + (self.margin + self.width) * node.x,
+                                                self.margin + (self.margin + self.height) * node.y, self.width,
+                                                self.height])
+        pygame.display.flip()
+
+        time.sleep(0.1)
+
+    """
     def calculate_path(self) -> None:
         x, y = self.end.x, self.end.y
         self.path.append((x, y))
@@ -292,6 +336,7 @@ class World:
                 y = y + 1
                 self.path.append((x, y))
                 self.k += 1
+    """
 
     def get_world(self):
         return self.grid
@@ -376,22 +421,32 @@ class AStar:
 
         # Use BFS to find the path from the start to the end
         # BFS starts with the end coordinates and searches for path to the start
+        
+        
+        # Adjust to check is queue is empty rather than check flag
         while True:
             dist, coordinate = q.get()
             w.update_world(coordinate)
             time.sleep(0.1)
+            #if coordinate.get_parent() is not None:
+            #    print((coordinate.x, coordinate.y), (coordinate.get_parent().x, coordinate.get_parent().y))
+            #else:
+            #    print((coordinate.x, coordinate.y))
 
             # If the start goal is reached, calculate path and display results
             if w.is_end(coordinate.x, coordinate.y):
+                w.end = coordinate
                 w.calculate_path()
-                w.show_path()
+                # w.show_path()
                 w.show_world()
                 break
 
-            c1 = Coordinate(coordinate.x, coordinate.y - 1, coordinate.dist + 1)
-            c2 = Coordinate(coordinate.x + 1, coordinate.y, coordinate.dist + 1)
-            c3 = Coordinate(coordinate.x, coordinate.y + 1, coordinate.dist + 1)
-            c4 = Coordinate(coordinate.x - 1, coordinate.y, coordinate.dist + 1)
+
+            # Check coordinates first and then create objects
+            c1 = Coordinate(coordinate.x, coordinate.y - 1, coordinate, "down", coordinate.dist + 1)
+            c2 = Coordinate(coordinate.x + 1, coordinate.y, coordinate, "right", coordinate.dist + 1)
+            c3 = Coordinate(coordinate.x, coordinate.y + 1, coordinate, "up", coordinate.dist + 1)
+            c4 = Coordinate(coordinate.x - 1, coordinate.y, coordinate, "left", coordinate.dist + 1)
 
             if w.within_range(c1.x, c1.y) and (w.grid[c1.y][c1.x] == 0 or w.is_end(c1.x, c1.y)):
                 w.grid[c1.y][c1.x] = w.grid[coordinate.y][coordinate.x] + 1
@@ -453,6 +508,12 @@ if __name__=="__main__":
     # algorithm = WaveFront()
     algorithm = AStar()
     algorithm.find_path(grid)
-
+    
+    """
+        Include a loop in the main program that allows the program to
+        not immediately exit after a path has been found/highlighted.
+        The user should have the option to reset the world and try the 
+        algorithm again with new coordinates.
+    """
 
     grid.close_game()
